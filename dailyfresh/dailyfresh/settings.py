@@ -14,6 +14,9 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 import sys
 
+# django认证系统使用的用户模型
+AUTH_USER_MODEL = "user.User"
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # 加入搜索路径
 sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))  # 需要导入sys
@@ -62,7 +65,7 @@ ROOT_URLCONF = 'dailyfresh.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -83,8 +86,12 @@ WSGI_APPLICATION = 'dailyfresh.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'ttsx',  # 数据库库名
+        'USER': 'root',  # 数据库用户名
+        'PASSWORD': 'mysql',  # 数据库密码
+        'HOST': 'localhost',  # 数据库IP地址
+        'PORT': 3306,  # 端口
     }
 }
 
@@ -92,9 +99,9 @@ DATABASES = {
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -107,6 +114,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),]
 
 # 富文本编辑器
 TINYMCE_DEFAULT_CONFIG = {
@@ -114,3 +122,16 @@ TINYMCE_DEFAULT_CONFIG = {
     'width': 600,
     'height': 400,
 }
+
+# 发送邮件设置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# smpt服务地址
+EMAIL_HOST = 'smtp.163.com'
+# 端口
+EMAIL_PORT = 25
+#发送邮件的邮箱
+EMAIL_HOST_USER = 'q79899@163.com'
+#在邮箱中设置的客户端授权密码
+EMAIL_HOST_PASSWORD = 'QW416226'
+#收件人看到的发件人
+EMAIL_FROM = '天天生鲜<q79899@163.com>'
