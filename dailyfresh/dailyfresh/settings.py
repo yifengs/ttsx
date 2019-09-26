@@ -135,3 +135,17 @@ EMAIL_HOST_USER = 'q79899@163.com'
 EMAIL_HOST_PASSWORD = 'QW416226'
 #收件人看到的发件人
 EMAIL_FROM = '天天生鲜<q79899@163.com>'
+
+# django缓存配置
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://192.168.199.130:6379/9",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+# 存储在缓存中：存储在本机内存中，如果丢失则不能找回，比数据库的方式读写更快。
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"

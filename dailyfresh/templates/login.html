@@ -2,7 +2,7 @@
 {% block body %}
 {% load staticfiles %}
 	<div class="login_top clearfix">
-		<a href="index.html" class="login_logo"><img src="images/logo02.png"></a>	
+		<a href="index.html" class="login_logo"><img src="{% static 'images/logo02.png' %}"></a>
 	</div>
 
 	<div class="login_form_bg">
@@ -15,13 +15,14 @@
 					<a href="#">立即注册</a>
 				</div>
 				<div class="form_input">
-					<form>
-						<input type="text" name="username" class="name_input" placeholder="请输入用户名">
+					<form method="post">
+                        {% csrf_token %}
+						<input type="text" name="username" class="name_input" value="{{ username }}" placeholder="请输入用户名">
 						<div class="user_error">输入错误</div>
 						<input type="password" name="pwd" class="pass_input" placeholder="请输入密码">
 						<div class="pwd_error">输入错误</div>
 						<div class="more_input clearfix">
-							<input type="checkbox" name="">
+							<input type="checkbox" name="remember" {{ checked }}>
 							<label>记住用户名</label>
 							<a href="#">忘记密码</a>
 						</div>
@@ -31,6 +32,8 @@
 			</div>
 		</div>
 	</div>
+
+    {{ errmsg }}
 
 	<div class="footer no-mp">
 		<div class="foot_link">

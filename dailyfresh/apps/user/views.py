@@ -101,6 +101,54 @@ class ActiveView(View):
 
 
 # 登录
+from django.contrib.auth import authenticate, login  # authenticate:user认证  login:用户登录并记录session
 class LoginView(View):
+    '''登录'''
     def get(self, request):
-        return render(request, 'login.html')
+        '''显示登录页面'''
+        # 判断是否记住用户名
+        if 'username' in request.COOKIES:
+            username = request.COOKIES.get('username')
+            checked = 'checked'
+        else:
+            username= ''
+            checked = ''
+        # 使用模板
+        return render(request, 'login.html', {'username':username, 'checked':checked})
+
+    def post(self, request):
+        '''登录校验'''
+        # 接收数据
+        username = request.POST.get('username')
+        password = request.POST.get('pwd')
+
+        # 校验数据
+        if not all([username, password]):
+            return render(request, 'login.html', {'errmsg':'数据不完整'})
+
+        user = authenticate(username=username, password=password)  # 查找数据库，有的话返回user信息 没有的话返回None
+        if user is not None:
+            # 用户名和密码正确
+            # 验证是否激活
+            if user.is_active:
+                # 用户已激活
+                # 记录用户登录状态
+                login(request, user)  # django.contrib.auth中的login方法
+                # 跳转到首页
+                response = redirect(reverse('goods:index'))  # HttpResponseRedirct
+                # 判断是否要记住用户名
+                remember = request.POST.get('remember')
+
+                if remember == 'on':
+                    # 记住用户名
+                    response.set_cookie('username', username, max_age=7*24*3600)  # 记录cookie
+                else:
+                    response.delete_cookie('username')
+                # 返回response
+                return response
+
+            else:
+                return render(request, 'login.html', {'errmsg':'用户尚未激活'})
+        else:
+            # 用户名或密码错误
+            return render(request, 'login.html', {'errmsg':'用户名或密码错误'})
