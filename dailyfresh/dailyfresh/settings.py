@@ -47,6 +47,7 @@ INSTALLED_APPS = (
     'cart',
     'goods',
     'orders',
+    'haystack',  # 注册全文检索框架
 )
 
 MIDDLEWARE_CLASSES = (
@@ -99,7 +100,7 @@ DATABASES = {
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
-LANGUAGE_CODE = 'zh-hans'
+LANGUAGE_CODE = 'zh-Hans'
 
 TIME_ZONE = 'Asia/Shanghai'
 
@@ -140,7 +141,7 @@ EMAIL_FROM = '天天生鲜<q79899@163.com>'
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.199.130:6379/9",
+        "LOCATION": "redis://127.0.0.1:6379/9",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -149,3 +150,28 @@ CACHES = {
 # 存储在缓存中：存储在本机内存中，如果丢失则不能找回，比数据库的方式读写更快。
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
+
+# 登录地址
+LOGIN_URL = '/user/login'
+
+# 设置django文件存储类
+DEFAULT_FILE_STORAGE='utils.fdfs.storage.FDFSStorage'
+# 设置fdfs使用的client.conf路径
+FDFS_CLIENT_CONF='./utils/fdfs/client.conf'
+# 设置fdfs存储服务器上nginx的IP和端口号
+FDFS_URL='http://192.168.137.130:8888/'
+
+# 全文检索框架配置
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        #使用whoosh引擎
+        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+        #索引文件路径
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    }
+}
+
+#当添加、修改、删除数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+# 控制每页显示数量
+HAYSTACK_SEARCH_RESULTS_PER_PAGE=10

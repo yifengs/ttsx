@@ -82,9 +82,11 @@ class ActiveView(View):
     def get(self, request, token):
         '''进行用户激活'''
         # 进行解密 获取要激活的用户信息
+        print(token)
         serializer = Serializer(settings.SECRET_KEY, 3600)
         try:
             info = serializer.loads(token)
+
             # 获取待激活用户id
             user_id = info['confirm']
 
@@ -114,31 +116,40 @@ class LoginView(View):
             username= ''
             checked = ''
         # 使用模板
-        return render(request, 'login.html', {'username':username, 'checked':checked})
+        return render(request, 'login.html', {'checked':checked})
 
     def post(self, request):
         '''登录校验'''
         # 接收数据
         username = request.POST.get('username')
         password = request.POST.get('pwd')
+        # print(username)
+        # print(password)
 
         # 校验数据
         if not all([username, password]):
             return render(request, 'login.html', {'errmsg':'数据不完整'})
 
         user = authenticate(username=username, password=password)  # 查找数据库，有的话返回user信息 没有的话返回None
+        print(user.password)
         if user is not None:
             # 用户名和密码正确
             # 验证是否激活
             if user.is_active:
                 # 用户已激活
                 # 记录用户登录状态
-                login(request, user)  # django.contrib.auth中的login方法
+                # print(user.is_active)
+                flag = login(request, user)  # django.contrib.auth中的login方法
                 # 跳转到首页
-                response = redirect(reverse('goods:index'))  # HttpResponseRedirct
+                # response = redirect(reverse('goods:index'))  # HttpResponseRedirct
+
+                # 接收当前访问的地址
+                next_url = request.GET.get('next', reverse('goods:index'))  # get() 第二个参数设置默认地址
+                # 登录校验 如果登录了 跳转到先前访问的地址
+                response = redirect(next_url)
                 # 判断是否要记住用户名
                 remember = request.POST.get('remember')
-
+                print(remember)
                 if remember == 'on':
                     # 记住用户名
                     response.set_cookie('username', username, max_age=7*24*3600)  # 记录cookie
@@ -152,3 +163,120 @@ class LoginView(View):
         else:
             # 用户名或密码错误
             return render(request, 'login.html', {'errmsg':'用户名或密码错误'})
+
+
+# 退出
+from django.contrib.auth import logout  # logout:退出并清除session信息
+class LogoutView(View):
+    def get(self, request):
+        '''退出页面'''
+        # 退出并清除session信息
+        logout(request)
+
+        # 跳转到首页
+        return redirect(reverse('goods:index'))
+
+
+from utils.mixin import LoginRequiredMinxin
+# 用户信息中心
+# /user
+class UserInfoView(LoginRequiredMinxin, View):
+    def get(self, request):
+        '''显示用户信息页面'''
+        # Django会给request对象添加一个属性request.user
+        # 如果用户未登录->user是AnonymousUser类的一个实例对象
+        # 如果用户登录->user是User类的一个实例对象
+        # request.user.is_authenticated()
+        # 除了你给模板文件传递的模板变量以外，django框架会把request.user也传递给模板文件
+
+        # 显示个人信息
+        user = request.user
+        address = Address.objects.get_default_addr(user)
+
+        # 获取历史记录
+        from django_redis import get_redis_connection
+        con = get_redis_connection('default')
+        history_key = 'history_%d'%user.id
+        # 获取用户最新浏览的5个商品的id
+        sku_ids = con.lrange(history_key, 0, 4)
+        # 从数据库中查询用户浏览的商品的具体信息
+        from goods.models import GoodsSKU
+        # 方法1
+        # goods_ids = GoodsSKU.objects.get(id__in=sku_ids)
+        # goods_list = []
+        # for s_id in sku_ids:
+        #     for goods in goods_ids:
+        #         if s_id == goods.id:
+        #             goods_list.append(goods)
+        # 方法2
+        goods_li = []
+        # 根据redis取出的列表的id顺序查询出商品 遍历出来
+        for id in sku_ids:
+            goods = GoodsSKU.objects.get(id=id)
+            goods_li.append(goods)
+
+        # 组织上下文
+        context = {
+            'address': address,
+            'page': 'user',
+            'goods_li':goods_li
+        }
+        return render(request, 'user_center_info.html', context)
+
+
+# 用户订单中心
+# /user/order
+class UserOrderView(LoginRequiredMinxin, View):
+    def get(self, request):
+        '''显示用户信息页面'''
+        from fdfs_client.client import Fdfs_client
+        # client = Fdfs_client('/etc/fdfs/client.conf')
+        # ret = client.upload_by_filename('test')
+        # print(ret)
+        return render(request, 'user_center_order.html', {'page':'order'})
+
+
+# 用户地址
+# /user/address
+from user.models import Address
+class AddressView(LoginRequiredMinxin, View):
+    def get(self, request):
+        '''显示用户信息页面'''
+        # 获取地址信息
+        user = request.user
+        address = Address.objects.get_default_addr(user)
+        print(address)
+        return render(request, 'user_center_site.html', {'page':'address', 'address':address})
+
+    def post(self, request):
+        '''添加地址'''
+        # 接收数据
+        receiver = request.POST.get('receiver')
+        zip_code = request.POST.get('zip_code')
+        addr = request.POST.get('addr')
+        phone = request.POST.get('phone')
+        # 校验数据
+        if not all([receiver, addr, phone]):
+            return render(request, 'user_center_site.html', {'errmsg':'数据不完整'})
+        if not re.match(r'^1[3|4|5|7|8][0-9]{9}$', phone):
+            return render(request, 'user_center_site.html', {'errmsg':'手机格式不正确'})
+        # 业务处理：地址添加
+        # 如果用户已存在默认收货地址，添加的地址不作为默认收货地址，否则作为默认收货地址
+        # 获取登录用户对应User对象
+        user = request.user
+        address = Address.objects.get_default_addr(user)
+
+        if address:
+            is_default = False
+        else:
+            is_default = True
+
+        # 添加地址
+        Address.objects.create(user=user,
+                               receiver=receiver,
+                               zip_code=zip_code,
+                               addr=addr,
+                               phone=phone,
+                               is_default=is_default)
+        # 返回应答 刷新页面
+        return redirect(reverse('user:address'))

@@ -1,8 +1,13 @@
-{% extends 'layout/header.html' %}
-{% block body %}
+{% extends 'layout/base.html' %}
 {% load staticfiles %}
+{% block title %}天天生鲜-登录{% endblock title %}
+{% block js %}{% endblock js %}
+{% block header_con %}{% endblock header_con %}
+{% block search_bar %}{% endblock search_bar %}
+{% block body %}
+
 	<div class="login_top clearfix">
-		<a href="index.html" class="login_logo"><img src="{% static 'images/logo02.png' %}"></a>
+		<a href="/" class="login_logo"><img src="{% static 'images/logo02.png' %}"></a>
 	</div>
 
 	<div class="login_form_bg">
@@ -15,6 +20,7 @@
 					<a href="#">立即注册</a>
 				</div>
 				<div class="form_input">
+                    {# form表单不设置提交地址action时，提交表单时，会向浏览器地址中的地址提交数据 #}
 					<form method="post">
                         {% csrf_token %}
 						<input type="text" name="username" class="name_input" value="{{ username }}" placeholder="请输入用户名">
@@ -35,17 +41,6 @@
 
     {{ errmsg }}
 
-	<div class="footer no-mp">
-		<div class="foot_link">
-			<a href="#">关于我们</a>
-			<span>|</span>
-			<a href="#">联系我们</a>
-			<span>|</span>
-			<a href="#">招聘人才</a>
-			<span>|</span>
-			<a href="#">友情链接</a>		
-		</div>
-		<p>CopyRight © 2016 北京天天生鲜信息技术有限公司 All Rights Reserved</p>
-		<p>电话：010-****888    京ICP备*******8号</p>
-	</div>
+
 {% endblock %}
+{% block bottomfiles %}{% endblock bottomfiles %}
