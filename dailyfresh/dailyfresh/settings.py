@@ -159,7 +159,7 @@ DEFAULT_FILE_STORAGE='utils.fdfs.storage.FDFSStorage'
 # 设置fdfs使用的client.conf路径
 FDFS_CLIENT_CONF='./utils/fdfs/client.conf'
 # 设置fdfs存储服务器上nginx的IP和端口号
-FDFS_URL='http://192.168.137.130:8888/'
+FDFS_URL='http://192.168.199.130:8888/'
 
 # 全文检索框架配置
 HAYSTACK_CONNECTIONS = {
